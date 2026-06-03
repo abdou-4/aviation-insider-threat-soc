@@ -144,7 +144,7 @@ The anomaly injector models realistic insider threat patterns drawn from ICAO, T
 aviation-insider-threat-soc/
 │
 ├── scripts/
-│   ├── generate_logs.py        # Synthetic log generator (5 types, 30 days)
+│   ├── generate_logs.py        # Synthetic log generator 
 │   ├── validate_logs.py        # QA suite — structural + statistical checks
 │   ├── risk_scoring.py         # UEBA engine — weights, compound, decay, alerts
 │   ├── soc_dashboard.py        # Static PNG chart generation (9 charts)
@@ -159,19 +159,16 @@ aviation-insider-threat-soc/
 │   └── cargo_anomaly.yml
 │
 ├── playbook/
-│   └── incident_response_playbook.md   # NIST-based triage → remediation
+│   └── incident_response_playbook.pdf
 │
-├── images/                     # Example screenshots for README
+├── images/                     # Example screenshots for README and UML
 │   ├── live_dashboard_overview.png
 │   ├── top10_risk.png
 │   ├── risk_timeline.png
 │   ├── badge_heatmap.png
 │   ├── alert_level_donut.png
-│   └── executive_dashboard.png
-│
-├── synthetic_logs/             # ⚠️ GITIGNORED — generated locally
-├── risk_output/                # ⚠️ GITIGNORED — generated locally
-├── validation_output/          # ⚠️ GITIGNORED — generated locally
+│   ├── executive_dashboard.png
+│   └──UML.png
 │
 ├── requirements.txt
 ├── .gitignore
