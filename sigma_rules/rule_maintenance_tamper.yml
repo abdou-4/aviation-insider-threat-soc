@@ -1,0 +1,56 @@
+
+title: Maintenance Tampering – Critical Component with Invalid Work Order
+id: b5f0e3c2-7a4d-4e8f-9b1c-3d5e7f8a0b2c
+status: experimental
+description: >
+  Detects tampering events (override_sensor, disable_alarm, or edit_log) on
+  critical aircraft components (Engine, FuelSystem, FlightControls) that are
+  not backed by a valid work order.  This may indicate an insider attempting to
+  bypass safety systems, cover up maintenance failures, or sabotage aircraft
+  readiness.
+references:
+  - https://attack.mitre.org/techniques/T1574/  (Hijack Execution Flow – software tampering analogue)
+  - https://attack.mitre.org/techniques/T1562/  (Impair Defenses – disable alarm / override sensor)
+  - Aviation Insider Threat Detection SOC – Maintenance System Anomalies
+author: SOC Detection Engineering Team
+date: 2025-06-02
+tags:
+  - attack.t1562
+  - attack.t1574
+  - attack.t1078
+  - attack.t0809  (Data Destruction – maintenance log cover-up)
+logsource:
+  category: application
+  product: aviation_maintenance_system
+  service: maintenance_api
+detection:
+  selection_actions:
+    action:
+      - override_sensor
+      - disable_alarm
+      - edit_log
+  selection_critical_components:
+    component:
+      - Engine
+      - FuelSystem
+      - FlightControls
+  selection_no_work_order:
+    work_order_valid: false
+  condition: selection_actions and selection_critical_components and selection_no_work_order
+falsepositives:
+  - Emergency maintenance where the work order was filed retroactively.
+  - Test environments or simulator logs misrouted to the production pipeline.
+  - Legacy component sensors that trigger work_order_valid=false due to a
+    system migration (investigate with maintenance supervisor).
+level: high
+# ──────────────────────────────────────────────────────────────────────────────
+# Implementation notes:
+#   The `work_order_valid` field is present in the generated maintenance_logs.csv.
+#   If the field is absent in a real deployment, remove selection_no_work_order
+#   and reduce the rule level to "medium", relying on action + component alone.
+#
+#   To detect log-tampering cover-ups specifically, add:
+#     selection_coverup:
+#       status|contains: "was failed"
+#   (this matches the string "passed (was failed)" from the generator)
+# ──────────────────────────────────────────────────────────────────────────────

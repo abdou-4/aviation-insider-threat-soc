@@ -1,0 +1,63 @@
+
+title: Off-Hours Sensitive Area Badge Access
+id: 7b1f3a9c-8e4d-4f2a-bc1d-5e3a9f7c8b2d
+status: experimental
+description: >
+  Detects badge access to sensitive areas (CargoArea, DataCenter, MaintenanceHangar)
+  during off-hours (22:00-06:00) when the employee is not scheduled for a shift.
+  This may indicate tailgating, coercion, or unauthorized perimeter penetration.
+references:
+  - https://attack.mitre.org/techniques/T1078/003/  (Valid Accounts: Local Accounts)
+  - Aviation Insider Threat Detection SOC – Physical Access Anomalies
+author: SOC Detection Engineering Team
+date: 2025-06-02
+tags:
+  - attack.t1078
+  - attack.t1078.003
+  - attack.t0875  (Remotely Access/Control Systems – physical access context)
+logsource:
+  category: physical_access
+  product: aviation_badge_system
+  service: badge_reader
+detection:
+  selection_hour:
+    # hour_of_day is derived from timestamp via:
+    #   | eval hour_of_day = strftime(timestamp, "%H")
+    # or in Wazuh: <field name="hour_of_day">.time.hour</field>
+    hour_of_day:
+      - 22
+      - 23
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+  selection_location:
+    door_location:
+      - CargoArea
+      - DataCenter
+      - MaintenanceHangar
+  selection_unscheduled:
+    shift_scheduled: false
+  condition: selection_hour and selection_location and selection_unscheduled
+falsepositives:
+  - Authorized overtime or emergency maintenance personnel (cross-check with work orders).
+  - Shift schedule data may be stale; verify against employee_table.shift_start/end.
+  - Security personnel or ITAdmin with standing after-hours authorisation.
+level: high
+# ──────────────────────────────────────────────────────────────────────────────
+# Notes:
+#   The field `shift_scheduled` is NOT present in the raw badge_logs.csv.
+#   It must be enriched from the employee_table by joining on employee_id and
+#   comparing the event hour against shift_start / shift_end.
+#
+#   Enrichment logic (pseudocode):
+#     merged = badge_logs.merge(employee_table, on="employee_id")
+#     merged["hour_of_day"] = merged["timestamp"].dt.hour
+#     merged["shift_scheduled"] = merged.apply(
+#         lambda r: not (r["hour_of_day"] < r["shift_start"]
+#                       or r["hour_of_day"] >= r["shift_end"]),
+#         axis=1
+#     )
+# ──────────────────────────────────────────────────────────────────────────────

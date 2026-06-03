@@ -1,0 +1,62 @@
+
+title: Bulk Data Exfiltration from Crew Portal
+id: a4e8d2f1-6b3c-4d7e-9f0a-8b1c2d3e4f5a
+status: experimental
+description: >
+  Detects bulk downloads from the crew portal that exceed reasonable thresholds.
+  Flags any download action where the record count exceeds 100 records or the
+  total bytes transferred exceeds 500 MB, particularly when the record type is
+  PassengerManifest (PII) or SecurityProtocol (sensitive procedures).  This may
+  indicate an insider exfiltrating passenger PII or security-sensitive data in
+  preparation for a leak or external sale.
+references:
+  - https://attack.mitre.org/techniques/T1048/  (Exfiltration Over Alternative Protocol)
+  - https://attack.mitre.org/techniques/T1052/  (Exfiltration Over Physical Medium)
+  - Aviation Insider Threat Detection SOC – Crew Portal Anomalies
+author: SOC Detection Engineering Team
+date: 2025-06-02
+tags:
+  - attack.t1048
+  - attack.t1052
+  - attack.t1078
+  - attack.t1530  (Data from Cloud Storage – crew portal analogue)
+logsource:
+  category: application
+  product: aviation_crew_portal
+  service: crew_portal_api
+detection:
+  selection_download:
+    action: download
+  selection_bulk:
+    # record_count is the number of individual records accessed in the request.
+    # bytes_transferred is the total payload size in bytes.
+    - record_count: 101
+      # Sigma >= 1.0 supports numeric comparison via `gte`, `gt`, `lte`, `lt`.
+      # If the backend does not support gte, use two conditions:
+      #   record_count|gt: 100
+      # Or treat record_count as a string for simple string-based SIEMs:
+      #   record_count|re: "^1[0-9]{2,}$"
+    - bytes_transferred|gte: 500000000
+  selection_sensitive_type:
+    record_type:
+      - PassengerManifest
+      - SecurityProtocol
+  condition: selection_download and selection_bulk and selection_sensitive_type
+falsepositives:
+  - Security audit or data migration triggered by authorised personnel (ITAdmin, SecurityOfficer).
+  - Analyst exporting passenger manifests for a legitimate law-enforcement request.
+  - Download may be split across multiple requests; correlate by user and time window.
+level: high
+# ──────────────────────────────────────────────────────────────────────────────
+# Tuning notes:
+#   For lower false-positive rates, add a filter to exclude SecurityOfficer and
+#   ITAdmin roles (since they have legitimate need for SecurityProtocol):
+#     filter_authorised_role:
+#       role:
+#         - SecurityOfficer
+#         - ITAdmin
+#     condition: selection and not filter_authorised_role
+#
+#   For early-warning (low-precision) detection, remove the sensitive_type
+#   condition so any bulk download is alerted.
+# ──────────────────────────────────────────────────────────────────────────────

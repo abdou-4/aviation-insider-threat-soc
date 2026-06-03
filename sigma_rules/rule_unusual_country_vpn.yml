@@ -1,0 +1,59 @@
+
+title: VPN Login from Unusual or High-Risk Country
+id: 3d8f7b1e-9c2a-4d5f-8e7b-1a2c3d4e5f6a
+status: experimental
+description: >
+  Detects VPN authentication from a geographic country that does not match the
+  employee's typical_country (enriched from employee_table) or that appears on
+  a static watchlist of high-risk jurisdictions (RU, CN, IR, KP, SY). This may
+  indicate credential theft, session hijacking, or an insider working with
+  foreign adversaries.
+references:
+  - https://attack.mitre.org/techniques/T1133/  (External Remote Services)
+  - https://attack.mitre.org/techniques/T1078/  (Valid Accounts)
+  - Aviation Insider Threat Detection SOC – VPN Anomalies
+author: SOC Detection Engineering Team
+date: 2025-06-02
+tags:
+  - attack.t1133
+  - attack.t1078
+  - attack.t1046  (Network Service Scanning – lateral movement indicator)
+logsource:
+  category: authentication
+  product: aviation_vpn
+  service: vpn_gateway
+detection:
+  # ── Option A: Static watchlist of high-risk countries ──────────────────
+  selection_high_risk:
+    geo_country:
+      - RU
+      - CN
+      - IR
+      - KP
+      - SY
+  # ── Option B: Mismatch with employee's typical country ────────────────
+  # Requires enrichment: join vpn_logs.username with employee_table.employee_id
+  # and compare geo_country vs typical_country.
+  selection_country_mismatch:
+    geo_country|neq: typical_country   # field introduced via enrichment
+  # ── Additional signal: failed auth preceding success ──────────────────
+  selection_fail_before:
+    auth_result: failure
+  condition: selection_high_risk or selection_country_mismatch
+falsepositives:
+  - Employee travelling for personal reasons and connecting from abroad.
+  - Business travel to an unusual country (verify with HR / travel requests).
+  - VPN provider or cloud egress IP geolocation inaccuracies.
+level: high
+# ──────────────────────────────────────────────────────────────────────────────
+# Enrichment note:
+#   `typical_country` comes from employee_table.  Join on:
+#     vpn_logs.username == employee_table.employee_id
+#
+#   For SIEMs without lookups, use the high-risk watchlist (Option A) alone,
+#   but be aware this will miss detections when an employee connects from a
+#   low-risk country that is still atypical (e.g. a US employee in Brazil).
+#
+#   Suspicious IP prefixes (Tor / VPN exit nodes) can be added as an additional
+#   watchlist column; see the synthetic data generator for example IPs.
+# ──────────────────────────────────────────────────────────────────────────────
