@@ -1,0 +1,42 @@
+# Generated data — users run generate_logs.py locally
+synthetic_logs/
+risk_output/
+validation_output/
+dashboard_output/
+
+# Specific generated files
+risk_summary.csv
+alerts_medium_high.csv
+high_risk_employees.json
+data_validation_report.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+Thumbs.db
