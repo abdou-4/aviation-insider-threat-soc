@@ -54,33 +54,50 @@ put the UML png here
 
 ---
 
-## 🧠 UEBA Risk-Scoring Engine (The Pointing System)
+## ⚙️ User and Entity Behavior Analytics (UEBA) Scoring Engine
+The core pipeline features a completely transparent, deterministic mathematical "pointing system" that eliminates the "black box" problems of machine-learning alternatives. It translates multi-vector log streams into prioritized analytical queues by tracking individual daily risk signatures alongside a rolling cumulative threat index.
 
-The detection engine is a **transparent, rule-based User and Entity Behaviour Analytics (UEBA)** model. Every suspicious event accrues weighted points; scores accumulate per employee per day and decay over time.
+### Risk Parameter Reference Table
+The scoring engine maps security compromises into discrete threat weights across multiple data contexts:
 
-### Event Weights
+| Log Source          | Event Trigger Scenario                                            | Original Weight | Calibrated Weight | MITRE ATT&CK Mapping                 |
+|---------------------|-------------------------------------------------------------------|----------------|-------------------|--------------------------------------|
+| Physical Security   | Off-hours badge access                                            | 10             | 3                 | Valid Accounts (T1078)               |
+| Physical Security   | Off-hours access + sensitive door entry                           | 15             | 5                 | Valid Accounts (T1078)               |
+| Network Security    | Unusual geolocated country VPN login                              | 15             | 4                 | Remote Services (T1133)              |
+| Network Security    | Brute-force VPN authentication attempts                           | 10             | 3                 | Brute Force (T1110)                  |
+| Application Layer   | Bulk data download (Crew Portal)                                  | 30             | 10                | Exfiltration Over Web (T1048)        |
+| Application Layer   | Unauthorized SecurityProtocol access                              | 20             | 6                 | Valid Accounts (T1078)               |
+| Maintenance Logs    | Component tampering without valid work order                      | 30             | 12                | Data Manipulation (T1565)            |
+| Cargo Management    | Total weight/manifest mismatch anomaly                            | 20             | 6                 | Data Manipulation (T1565)            |
+| Cargo Management    | Off-hours cargo bay door access                                   | 10             | 3                 | Valid Accounts (T1078)               |
+| Cross-Correlation   | Compound Threat Bonus (Multi-vector <1hr)                         | 20             | 6                 | Lateral Movement / Exfil             |
 
-| Detection Rule | Weight | Log Source |
-|----------------|--------|------------|
-| Off-hours badge access (22–06 h, `shift_scheduled=False`) | **+10** | Badge |
-| Off-hours + sensitive door (`CargoArea`, `DataCenter`, `MaintenanceHangar`) | **+15** *(cumulative)* | Badge |
-| VPN from high-risk nation (`RU`, `CN`, `IR`, `KP`, `SY`) or country mismatch | **+15** | VPN |
-| Brute-force VPN (>3 auth failures within 10 min, same source IP) | **+10** | VPN |
-| Bulk download (`record_count > 100` or `bytes_transferred > 500 MB`) | **+30** | Crew Portal |
-| Unauthorised `SecurityProtocol` access (non-security role) | **+20** | Crew Portal |
-| Maintenance tamper (`override_sensor` / `disable_alarm` / `edit_log`) without valid work order | **+30** | Maintenance |
-| Cargo weight anomaly (manifest edit reducing weight > 20 kg in under 1 h) | **+20** | Cargo |
-| Off-hours cargo door open by unscheduled handler | **+10** | Cargo |
-| **Compound bonus** — ≥ 2 different event types within any 1-hour window | **+20** | All |
+## Time-Decay Modeling
 
-### Alert Thresholds & Decay
+To prevent brief, historic spikes from permanently poisoning an employee's risk status, the engine utilizes a **half-life mathematical decay model** applied across daily increments:
+
+$$
+Score_{decayed} = Score_{previous} \times e^{-\lambda t} + Score_{raw\_today}
+$$
+
+### Key Parameters
+
+- **Calibrated Decay Rate**: A **3-day half-life** ($\lambda \approx 0.231$) is utilized instead of a standard 7-day window.
+
+### Rationale
+
+This approach scales the steady-state cumulative risk multiplier down from $10.5\times$ to a highly responsive **$4.85\times$** daily raw input, aligning perfectly with standard **30-day corporate investigation cycles**.
+
+## Calibrated Threat Boundaries
+Alert thresholds are applied exclusively to a single day's **daily_raw_score** rather than a compounded total, generating clear, actionable tiers:
 
 ```
-Score < 30   →  LOW     (logged only)
-Score 30–59  →  MEDIUM  (SOC analyst review)
-Score ≥ 60   →  HIGH    (incident response triggered)
+Low Risk Profile (18–231 Score): Normal employees operating strictly within assigned shift boundaries.
 
-Decay: score × 0.5 every 7 days with no new events (exponential half-life)
+Medium Risk Profile (211–297 Score): One-off operational anomalies (e.g., an unannounced out-of-country remote login).
+
+High Risk Profile (226–386 Score): Immediate threat targets showing compounding multi-vector security triggers.
 ```
 
 ### Why No ML?
