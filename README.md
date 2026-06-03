@@ -163,6 +163,7 @@ aviation-insider-threat-soc/
 │
 ├── images/                     # Example screenshots for README and UML
 │   ├── live_dashboard_overview.png
+│   ├── Badge_Access_Analysis.png
 │   ├── top10_risk.png
 │   ├── risk_timeline.png
 │   ├── badge_heatmap.png
