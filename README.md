@@ -48,9 +48,9 @@
 
 ## 🏗️ Architecture
 
-```
+
 ![UML](images/UML.png "UML")
-```
+
 
 ---
 
