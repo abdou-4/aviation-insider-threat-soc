@@ -110,23 +110,23 @@ This is a deliberate design decision. Rule-based UEBA is:
 
 ---
 
-## 📋 Sigma Detection Rules
+## Sigma Detection Rules
 
 Five Sigma-compatible YAML rules are included in `sigma_rules/`, each targeting a distinct threat vector.
 
 | Rule | File | MITRE Technique |
 |------|------|-----------------|
-| Off-hours sensitive area access | `badge_off_hours.yml` | T1078 – Valid Accounts |
-| Unusual VPN geo-login / high-risk country | `vpn_unusual_country.yml` | T1133 – External Remote Services |
-| Bulk data exfiltration via crew portal | `bulk_exfiltration.yml` | T1048 – Exfiltration Over Alt Protocol |
-| Maintenance tampering on critical components | `maintenance_tamper.yml` | T1565 – Data Manipulation |
-| Cargo weight anomaly (manifest fraud) | `cargo_anomaly.yml` | T1565.001 – Stored Data Manipulation |
+| Off-hours sensitive area access | `rule_off_hours_badge.yml` | T1078 – Valid Accounts |
+| Unusual VPN geo-login / high-risk country | `rule_unusual_country_vpn.yml` | T1133 – External Remote Services |
+| Bulk data exfiltration via crew portal | `rule_bulk_exfil_crew_portal.yml` | T1048 – Exfiltration Over Alt Protocol |
+| Maintenance tampering on critical components | `rule_maintenance_tamper.yml` | T1565 – Data Manipulation |
+| Cargo weight anomaly (manifest fraud) | `rule_cargo_weight_anomaly.yml` | T1565.001 – Stored Data Manipulation |
 
 Rules are tested by `test_rules.py`, which emulates Sigma matching logic directly against the CSV logs — no SIEM required.
 
 ---
 
-## 🎭 Threat Scenarios Covered
+## Threat Scenarios Covered
 
 The anomaly injector models realistic insider threat patterns drawn from ICAO, TSA, and MITRE ICS ATT&CK:
 
@@ -143,24 +143,6 @@ The anomaly injector models realistic insider threat patterns drawn from ICAO, T
 ```
 aviation-insider-threat-soc/
 │
-├── scripts/
-│   ├── generate_logs.py        # Synthetic log generator 
-│   ├── validate_logs.py        # QA suite — structural + statistical checks
-│   ├── risk_scoring.py         # UEBA engine — weights, compound, decay, alerts
-│   ├── soc_dashboard.py        # Static PNG chart generation (9 charts)
-│   ├── live_dashboard.py       # Streamlit interactive dashboard
-│   └── test_rules.py           # Sigma rule emulation tests
-│
-├── sigma_rules/
-│   ├── badge_off_hours.yml
-│   ├── vpn_unusual_country.yml
-│   ├── bulk_exfiltration.yml
-│   ├── maintenance_tamper.yml
-│   └── cargo_anomaly.yml
-│
-├── playbook/
-│   └── incident_response_playbook.pdf
-│
 ├── images/                     # Example screenshots for README and UML
 │   ├── live_dashboard_overview.png
 │   ├── Badge_Access_Analysis.png
@@ -171,9 +153,28 @@ aviation-insider-threat-soc/
 │   ├── executive_dashboard.png
 │   └──UML.png
 │
+├── playbook/
+│   └── incident_response_playbook.pdf
+│
+├── scripts/
+│   ├── generate_logs.py        # Synthetic log generator 
+│   ├── validate_logs.py        # QA suite — structural + statistical checks
+│   ├── risk_scoring.py         # UEBA engine — weights, compound, decay, alerts
+│   ├── soc_dashboard.py        # Static PNG chart generation (9 charts)
+│   ├── live_dashboard.py       # Streamlit interactive dashboard
+│   └── test_rules.py           # Sigma rule emulation tests
+│
+│
+├── sigma_rules/
+│   ├── rule_bulk_exfil_crew_portal.yml
+│   ├── rule_cargo_weight_anomaly.yml
+│   ├── rule_maintenance_tamper.yml
+│   ├── rule_off_hours_badge.yml
+│   └── rule_unusual_country_vpn.yml
+│
 ├── requirements.txt
-├── .gitignore
-└── README.md
+├── README.md
+└── requirements.txt
 ```
 
 ---
@@ -190,7 +191,7 @@ Python 3.8+
 
 ```bash
 # 1. Clone
-git clone https://github.com/YOUR_USERNAME/aviation-insider-threat-soc.git
+git clone https://github.com/abdou-4/aviation-insider-threat-soc.git
 cd aviation-insider-threat-soc
 
 # 2. Install dependencies
@@ -266,12 +267,10 @@ plotly>=5.15
 | Tab | Contents |
 |-----|----------|
 | **Risk Overview** | Top-10 risk employees, alert distribution donut, daily score timeline |
-| **Badge Analysis** | Hourly access heatmap by role, off-hours violations table |
-| **VPN Threats** | Country-of-origin map, brute-force cluster timeline |
-| **Crew Portal** | Bulk download events, record-type access breakdown |
-| **Maintenance** | Tamper events by component, work-order compliance rate |
-| **Cargo** | Weight anomaly scatter, off-hours door access events |
-| **Employee Drill-Down** | Per-employee full event log, score history chart |
+| **Badge Access** | Hourly access heatmap by role, off-hours violations table |
+| **VPN & Network** | Country-of-origin map, brute-force cluster timeline |
+| **Data Exfiltration** | Bulk download events, record-type access breakdown |
+| **Maintenance & Cargo** | Tamper events by component, work-order compliance rate,Weight anomaly scatter |
 
 ---
 
