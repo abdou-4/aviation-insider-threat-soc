@@ -49,7 +49,7 @@
 ## 🏗️ Architecture
 
 ```
-put the UML png here 
+![UML](images/UML.png "UML")
 ```
 
 ---
